@@ -124,7 +124,7 @@ api.interceptors.response.use(
 
 export const loginUser = async (loginData) => {
     try {
-      const response = await api.post('/login', loginData);
+      const response = await api.post('/volunteer/login', loginData);
       console.log("response", response)
       console.log('Login successful:', response.data);
       
