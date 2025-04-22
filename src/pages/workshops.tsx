@@ -1,6 +1,8 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { workshopFetch, workshopCheckIn } from '../api/AuthApi';       // API functions to fetch and check in
-import { Workshop } from '../types/workshop';          // Workshop type definition
+// components/Workshops.tsx
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/router'; // ← add this import
+import { workshopFetch, workshopCheckIn } from '../api/AuthApi';
+import { Workshop } from '../types/workshop';
 import { toast } from 'react-toastify';
 import {
   Box,
@@ -19,84 +21,47 @@ import {
   ModalBody,
   ModalFooter,
 } from '@chakra-ui/react';
+import QRScanner from '../components/qr-scanner'; // ← import your TSX scanner
 
-const Workshops = () => {
+const Workshops: React.FC = () => {
+  const router = useRouter(); // ← initialize the router
   const [workshops, setWorkshops] = useState<Workshop[]>([]);
   const [loading, setLoading] = useState(true);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [selectedWorkshop, setSelectedWorkshop] = useState<Workshop | null>(null);
-  const scannerRef = useRef<HTMLDivElement>(null);
-  let html5QrcodeScanner: any = null;
 
-  // Determine background color based on current color-mode
   const cardBg = useColorModeValue('white', 'gray.700');
 
   useEffect(() => {
-    const fetchWorkshops = async () => {
+    (async () => {
       try {
         const data = await workshopFetch();
-        if (Array.isArray(data)) {
-          setWorkshops(data as Workshop[]);
-        } else {
-          throw new Error('Invalid data format received from API');
-        }
-      } catch (error) {
-        toast.error('Failed to fetch workshops. Please try again later.');
-        console.error('Error fetching workshops:', error);
+        if (!Array.isArray(data)) throw new Error('Invalid format');
+        setWorkshops(data);
+      } catch (err) {
+        console.error(err);
+        toast.error('Failed to fetch workshops.');
       } finally {
         setLoading(false);
       }
-    };
-
-    fetchWorkshops();
+    })();
   }, []);
 
-  // Initialize or stop QR scanner when modal opens/closes
-  useEffect(() => {
-    let isMounted = true;
-    if (scannerOpen && scannerRef.current) {
-      // dynamically import to avoid SSR
-      import('html5-qrcode').then(({ Html5QrcodeScanner }) => {
-        if (!isMounted) return;
-        html5QrcodeScanner = new Html5QrcodeScanner(
-          scannerRef.current!.id,
-          { fps: 10, qrbox: { width: 250, height: 250 } },
-          false
-        );
-        html5QrcodeScanner.render(
-          async (decodedText: string) => {
-            if (selectedWorkshop) {
-              try {
-                await workshopCheckIn(selectedWorkshop.workshop_id, decodedText);
-                toast.success('Check-in successful!');
-              } catch (err) {
-                toast.error('Check-in failed. Please try again.');
-                console.error('Error checking in:', err);
-              }
-              html5QrcodeScanner.clear().catch(console.error);
-              setScannerOpen(false);
-              setSelectedWorkshop(null);
-            }
-          },
-          (errorMessage: string) => {
-            // optional error callback
-            console.warn('QR scan error:', errorMessage);
-          }
-        );
-      }).catch(err => {
-        console.error('Failed to load html5-qrcode', err);
-        toast.error('Could not load QR scanner.');
-        setScannerOpen(false);
-        setSelectedWorkshop(null);
-      });
+  const handleScan = async (decodedText: string) => {
+    if (!selectedWorkshop) return;
+    try {
+      await workshopCheckIn(selectedWorkshop.workshop_id, decodedText);
+      toast.success('Check‑in successful!');
+      router.push('/success'); // redirect on success
+    } catch (err) {
+      console.error(err);
+      toast.error('Check‑in failed.');
+      router.push('/failure'); // redirect on failure
+    } finally {
+      setScannerOpen(false);
+      setSelectedWorkshop(null);
     }
-    return () => {
-      isMounted = false;
-      if (html5QrcodeScanner) {
-        html5QrcodeScanner.clear().catch(console.error);
-      }
-    };
-  }, [scannerOpen, selectedWorkshop]);
+  };
 
   if (loading) {
     return (
@@ -110,30 +75,30 @@ const Workshops = () => {
     <Box p={6} maxW="container.lg" mx="auto">
       <Heading mb={6}>Upcoming Workshops</Heading>
       <Stack spacing={4}>
-        {workshops.map((workshop) => (
+        {workshops.map(w => (
           <Box
-            key={workshop.workshop_id}
+            key={w.workshop_id}
             p={5}
             shadow="md"
             borderWidth="1px"
             borderRadius="md"
             bg={cardBg}
           >
-            <Heading fontSize="xl">{workshop.title}</Heading>
-            {workshop.date && (
+            <Heading fontSize="xl">{w.title}</Heading>
+            {w.date && (
               <Text fontSize="sm" color="gray.500" mt={1}>
-                {new Date(workshop.date).toLocaleDateString()}
+                {new Date(w.date).toLocaleDateString()}
               </Text>
             )}
             <Text fontSize="sm" color="gray.500">
-              Availability: {workshop.availability}
+              Availability: {w.availability}
             </Text>
             <Button
               mt={3}
               colorScheme="teal"
               size="sm"
               onClick={() => {
-                setSelectedWorkshop(workshop);
+                setSelectedWorkshop(w);
                 setScannerOpen(true);
               }}
             >
@@ -151,12 +116,13 @@ const Workshops = () => {
           <ModalCloseButton />
           <ModalBody>
             <Center>
-              <Box
-                id="qr-scanner"
-                ref={scannerRef}
-                width="100%"
-                height="auto"
-              />
+              <Box width="100%" minH="250px">
+                <QRScanner
+                  onScan={handleScan}
+                  facingMode="environment"
+                  style={{ width: '100%', height: '100%' }}
+                />
+              </Box>
             </Center>
           </ModalBody>
           <ModalFooter>

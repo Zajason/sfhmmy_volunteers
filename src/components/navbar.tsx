@@ -11,6 +11,12 @@ const Navbar: React.FC = () => {
         if (index === 1) { // Workshop Check tab
             router.push('/workshops');
         }
+        else if (index === 2) { // Logout tab
+            router.push('/logout');
+        }
+        else if (index === 0) { // Registration Check tab
+            router.push('/registration');
+        }
     };
 
     return (

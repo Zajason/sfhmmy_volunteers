@@ -3,7 +3,7 @@ import { toast } from 'react-toastify'; // Make sure this is imported at the top
 
 const API_URL = process.env.NODE_ENV === 'development' 
   ? 'http://127.0.0.1:8000/api'  // Local development server
-  : 'https://sfhmmy.gr/api';     // Production server
+  : '/api';     // Production server
 
 // Create an axios instance with consistent config
 export const api = axios.create({
