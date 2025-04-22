@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    /* Light mode variables */
+    --background: #ffffff;
+    --card-bg: #e5e7eb;
+    --text-color: #1e3a8a;
+    --input-bg: #d1d5db;
+    --btn-bg: #2563eb;
+    --btn-hover: #1d4ed8;
+  }
+  
+  .dark {
+    /* Dark mode overrides */
+    --background: #000000;
+    --card-bg: #1f2937;
+    --text-color: #ffffff;
+    --input-bg: #374151;
+    --btn-bg: #3b82f6;
+    --btn-hover: #2563eb;
+  }
+  
+  /* Utility classes using CSS variables */
+  .bg-background { background-color: var(--background); }
+  .bg-cardBackground { background-color: var(--card-bg); }
+  .text-textColor    { color: var(--text-color); }
+  .bg-inputBackground { background-color: var(--input-bg); }
+  .bg-buttonBackground{ background-color: var(--btn-bg); }
+  .hover\:bg-buttonHover:hover { background-color: var(--btn-hover); }
