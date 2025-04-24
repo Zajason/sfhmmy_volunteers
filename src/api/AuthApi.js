@@ -178,13 +178,35 @@ export const loginUser = async (loginData) => {
     }
   }
 
-  export const userRegistration = async (user_id) => {
+  export const workshopWaitingListCheckIn = async (workshop_id, user_id) => {
     try {
-      const response = await api.post('/volunteer/register', { user_id });
-      console.log('User registration successful:', response.data);
+      const response = await api.post('/volunteer/waitinglistcheckin', { workshop_id, user_id });
+      console.log('Waiting list check-in successful:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Error during user registration:', error.response ? error.response.data : error.message);
+      console.error('Error during waiting list check-in:', error.response ? error.response.data : error.message);
       throw error;
     }
   }
+
+  export const userRegistration = async (user_id) => {
+    try {
+      const response = await api.post('/volunteer/registration', { user_id });
+      console.log('User registration successful:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error(
+        'Error during user registration:',
+        error.response ? error.response.data : error.message
+      );
+      if (
+        error.response &&
+        error.response.data &&
+        error.response.data.message
+      ) {
+        // throw the backend’s message, not a nonexistent `response` var
+        throw { message: error.response.data.message };
+      }
+      throw error;
+    }
+  };

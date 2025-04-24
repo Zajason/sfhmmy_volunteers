@@ -15,7 +15,7 @@ const Navbar: React.FC = () => {
             router.push('/logout');
         }
         else if (index === 0) { // Registration Check tab
-            router.push('/registration');
+            router.push('/');
         }
     };
 

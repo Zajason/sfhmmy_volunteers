@@ -41,10 +41,14 @@ const QRScanner: React.FC<QRScannerProps> = ({
 
         // Select device matching facingMode or fallback to first
         const desiredDevice =
-          videoInputDevices.find((device) =>
-            device.label.toLowerCase().includes(facingMode)
-          ) || videoInputDevices[0];
+          videoInputDevices.find((device) => {
+            const label = device.label.toLowerCase();
+            return facingMode === 'environment'
+              ? label.includes('back')
+              : label.includes('front');
+          }) || videoInputDevices[0];
 
+        // Start decoding from the selected device
         codeReader
           .decodeFromVideoDevice(
             desiredDevice.deviceId,
@@ -66,6 +70,7 @@ const QRScanner: React.FC<QRScannerProps> = ({
             setErrorMessage((err as Error).message);
           });
       } catch (err) {
+        console.error('Error initializing QR code scanner:', err);
         setErrorMessage((err as Error).message);
       }
     };

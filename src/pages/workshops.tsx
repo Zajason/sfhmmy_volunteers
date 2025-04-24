@@ -24,11 +24,14 @@ import {
 import QRScanner from '../components/qr-scanner'; // ← import your TSX scanner
 
 const Workshops: React.FC = () => {
-  const router = useRouter(); // ← initialize the router
+  const router = useRouter();
   const [workshops, setWorkshops] = useState<Workshop[]>([]);
   const [loading, setLoading] = useState(true);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [selectedWorkshop, setSelectedWorkshop] = useState<Workshop | null>(null);
+  
+  // Add state to control camera facing mode
+  const [scannerFacing, setScannerFacing] = useState<'environment' | 'user'>('environment');
 
   const cardBg = useColorModeValue('white', 'gray.700');
 
@@ -61,6 +64,11 @@ const Workshops: React.FC = () => {
       setScannerOpen(false);
       setSelectedWorkshop(null);
     }
+  };
+
+  // Toggle between front and back camera
+  const toggleCamera = () => {
+    setScannerFacing((prev) => (prev === 'environment' ? 'user' : 'environment'));
   };
 
   if (loading) {
@@ -115,11 +123,14 @@ const Workshops: React.FC = () => {
           <ModalHeader>Scan QR Code</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-            <Center>
+            <Center flexDirection="column">
+              <Button onClick={toggleCamera} mb={4} colorScheme="blue" size="sm">
+                Switch to {scannerFacing === 'environment' ? 'Front' : 'Back'} Camera
+              </Button>
               <Box width="100%" minH="250px">
                 <QRScanner
                   onScan={handleScan}
-                  facingMode="environment"
+                  facingMode={scannerFacing}
                   style={{ width: '100%', height: '100%' }}
                 />
               </Box>

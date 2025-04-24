@@ -1,6 +1,6 @@
 // pages/_app.tsx
 import "../globals.css";
-import { ThemeProvider } from "next-themes";
+import { ThemeProvider } from "../utils/ThemeContext"
 import type { AppProps } from "next/app";
 import { ChakraProvider } from "@chakra-ui/react";
 import React from "react";
@@ -14,12 +14,12 @@ function MyApp({ Component, pageProps }: AppProps) {
   const path = router.pathname;
 
   // list all the pages that should NOT require login:
-  const publicRoutes = ["/", "/login", "/signup", "/about"];
+  const publicRoutes = ["/login"];
   const isPublic = publicRoutes.includes(path);
 
   return (
     <ChakraProvider>
-      <ThemeProvider attribute="class" defaultTheme="dark">
+      <ThemeProvider>
         <AuthProvider>
           {path !== "/login" && <Navbar />}
 
