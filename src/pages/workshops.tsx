@@ -1,9 +1,8 @@
-// components/Workshops.tsx
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/router'; // ← add this import
 import { workshopFetch, workshopCheckIn } from '../api/AuthApi';
 import { Workshop } from '../types/workshop';
 import { toast } from 'react-toastify';
+import { useRouter } from 'next/router';
 import {
   Box,
   Heading,
@@ -21,7 +20,7 @@ import {
   ModalBody,
   ModalFooter,
 } from '@chakra-ui/react';
-import QRScanner from '../components/qr-scanner'; // ← import your TSX scanner
+import QRScanner from '../components/FastQRScanner'; // using your optimized QR scanner
 
 const Workshops: React.FC = () => {
   const router = useRouter();
@@ -29,9 +28,8 @@ const Workshops: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [selectedWorkshop, setSelectedWorkshop] = useState<Workshop | null>(null);
-  
-  // Add state to control camera facing mode
   const [scannerFacing, setScannerFacing] = useState<'environment' | 'user'>('environment');
+  const [scanStatus, setScanStatus] = useState<null | 'approved' | 'failed'>(null);
 
   const cardBg = useColorModeValue('white', 'gray.700');
 
@@ -52,29 +50,31 @@ const Workshops: React.FC = () => {
 
   const handleScan = async (decodedText: string) => {
     if (!selectedWorkshop) return;
+
     try {
       const result = await workshopCheckIn(selectedWorkshop.workshop_id, decodedText);
       toast.success(result.message);
-      router.push({
-        pathname: '/success',
-        query: { message: result.message }
-      }); // redirect on success with query parameter
+      setScanStatus('approved');
     } catch (err) {
       console.error('Check‑in failed', err);
       toast.error('Check‑in failed');
-      router.push({
-        pathname: '/failure',
-        query: { message: (err as Error).message || 'An unknown error occurred' }
-      });
-    } finally {
-      setScannerOpen(false);
-      setSelectedWorkshop(null);
+      setScanStatus('failed');
     }
+
+    // Reset status after 2 seconds to allow next scan
+    setTimeout(() => {
+      setScanStatus(null);
+    }, 4000);
   };
 
-  // Toggle between front and back camera
   const toggleCamera = () => {
-    setScannerFacing((prev) => (prev === 'environment' ? 'user' : 'environment'));
+    setScannerFacing(prev => (prev === 'environment' ? 'user' : 'environment'));
+  };
+
+  const handleModalClose = () => {
+    setScannerOpen(false);
+    setSelectedWorkshop(null);
+    setScanStatus(null);
   };
 
   if (loading) {
@@ -123,7 +123,7 @@ const Workshops: React.FC = () => {
       </Stack>
 
       {/* QR Scanner Modal */}
-      <Modal isOpen={scannerOpen} onClose={() => setScannerOpen(false)} isCentered>
+      <Modal isOpen={scannerOpen} onClose={handleModalClose} isCentered size="lg">
         <ModalOverlay />
         <ModalContent>
           <ModalHeader>Scan QR Code</ModalHeader>
@@ -140,10 +140,15 @@ const Workshops: React.FC = () => {
                   style={{ width: '100%', height: '100%' }}
                 />
               </Box>
+              {scanStatus && (
+                <Text mt={4} fontSize="lg" fontWeight="bold" color={scanStatus === 'approved' ? 'green.400' : 'red.400'}>
+                  {scanStatus === 'approved' ? '✅ Approved' : '❌ Failed'}
+                </Text>
+              )}
             </Center>
           </ModalBody>
           <ModalFooter>
-            <Button variant="ghost" onClick={() => setScannerOpen(false)}>
+            <Button variant="ghost" onClick={handleModalClose}>
               Cancel
             </Button>
           </ModalFooter>

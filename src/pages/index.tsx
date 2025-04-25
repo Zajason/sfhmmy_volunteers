@@ -1,11 +1,10 @@
-// pages/index.tsx
-import type { NextPage } from 'next'
-import Head from 'next/head'
-import React, { useState } from 'react'
-import { toast } from 'react-toastify'
-import QRScanner from '../components/qr-scanner'
-import { useRouter } from 'next/router'
-import { userRegistration } from '../api/AuthApi'
+import type { NextPage } from 'next';
+import Head from 'next/head';
+import React, { useState } from 'react';
+import { toast } from 'react-toastify';
+import { useRouter } from 'next/router';
+import { userRegistration } from '../api/AuthApi';
+import FastQRScanner from '../components/FastQRScanner';
 import {
   Box,
   Center,
@@ -17,40 +16,48 @@ import {
   ModalCloseButton,
   ModalBody,
   ModalFooter,
-} from '@chakra-ui/react'
+  Text,
+} from '@chakra-ui/react';
 
 const Home: NextPage = () => {
-  const router = useRouter()
-  const [scannerOpen, setScannerOpen] = useState(false)
-  const [facingMode, setFacingMode] = useState<'environment' | 'user'>(
-    'environment'
-  )
+  const router = useRouter();
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
+  const [scanStatus, setScanStatus] = useState<null | 'approved' | 'failed'>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleScan = async (decodedText: string) => {
     try {
-      // Attempt user registration with scanned QR code
-      await userRegistration(decodedText)
-      toast.success(`Registration successful!`)
-      setScannerOpen(false)
-      router.push('/success')
-    } catch (err) {
-      console.error('Registration failed', err)
-      toast.error('Registration failed')
-      setScannerOpen(false)
-      router.push({
-        pathname: '/failure',
-        query: { message: (err as Error).message || 'An unknown error occurred' },
-      });
+      await userRegistration(decodedText);
+      toast.success('Registration successful!');
+      setScanStatus('approved');
+      setErrorMessage(null);
+    } catch (err: any) {
+      const message =
+        typeof err === 'object' && err?.message
+          ? err.message
+          : 'Registration failed';
+      toast.error(message);
+      setScanStatus('failed');
+      setErrorMessage(message);
     }
-  }
 
-  
+    // Reset state after 3 seconds
+    setTimeout(() => {
+      setScanStatus(null);
+      setErrorMessage(null);
+    }, 3000);
+  };
 
   const toggleCamera = () => {
-    setFacingMode((mode) =>
-      mode === 'environment' ? 'user' : 'environment'
-    )
-  }
+    setFacingMode((mode) => (mode === 'environment' ? 'user' : 'environment'));
+  };
+
+  const handleModalClose = () => {
+    setScannerOpen(false);
+    setScanStatus(null);
+    setErrorMessage(null);
+  };
 
   return (
     <>
@@ -60,7 +67,6 @@ const Home: NextPage = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      {/* Full‑screen light bg with centered card */}
       <Center className="min-h-screen bg-white px-4">
         <Button
           onClick={() => setScannerOpen(true)}
@@ -68,7 +74,7 @@ const Home: NextPage = () => {
           colorScheme="blue"
           py={2}
           rounded="md"
-          _hover={{ bg: "blue.600" }}
+          _hover={{ bg: 'blue.600' }}
           transition="all 150ms"
         >
           Check Pax QR
@@ -76,35 +82,52 @@ const Home: NextPage = () => {
       </Center>
 
       {/* Scanner Modal */}
-      {scannerOpen && (
-        <Modal isOpen={scannerOpen} onClose={() => setScannerOpen(false)} isCentered>
-          <ModalOverlay />
-          <ModalContent>
-            <ModalHeader>Scan QR Code</ModalHeader>
-            <ModalCloseButton />
-            <ModalBody>
-              <Center flexDirection="column">
-                <Button onClick={toggleCamera} mb={4} colorScheme="blue" size="sm">
-                  Switch to {facingMode === 'environment' ? 'Front' : 'Back'} Camera
-                </Button>
-                <Box width="100%" minH="250px">
-                  <QRScanner
-                    key={facingMode} // force remount when facingMode flips
-                    onScan={handleScan}
-                    facingMode={facingMode}
-                    style={{ width: '100%', height: '100%' }}
-                  />
-                </Box>
-              </Center>
-            </ModalBody>
-            <ModalFooter>
-              <Button variant="ghost" onClick={() => setScannerOpen(false)}>
-                Cancel
+      <Modal isOpen={scannerOpen} onClose={handleModalClose} isCentered size="lg">
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Scan QR Code</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Center flexDirection="column">
+              <Button onClick={toggleCamera} mb={4} colorScheme="blue" size="sm">
+                Switch to {facingMode === 'environment' ? 'Front' : 'Back'} Camera
               </Button>
-            </ModalFooter>
-          </ModalContent>
-        </Modal>
-      )}
+              <Box width="100%" minH="250px">
+                <FastQRScanner
+                  key={facingMode} // remount scanner on camera flip
+                  onScan={handleScan}
+                  facingMode={facingMode}
+                  style={{ width: '100%', height: '100%' }}
+                />
+              </Box>
+
+              {scanStatus && (
+                <Text
+                  mt={4}
+                  fontSize="lg"
+                  fontWeight="bold"
+                  color={scanStatus === 'approved' ? 'green.400' : 'red.400'}
+                >
+                  {scanStatus === 'approved'
+                    ? '✅ Registration Approved'
+                    : '❌ Registration Failed'}
+                </Text>
+              )}
+
+              {errorMessage && scanStatus === 'failed' && (
+                <Text mt={2} fontSize="sm" color="red.500">
+                  {errorMessage}
+                </Text>
+              )}
+            </Center>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="ghost" onClick={handleModalClose}>
+              Cancel
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </>
   );
 };
