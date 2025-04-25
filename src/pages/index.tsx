@@ -28,10 +28,11 @@ const Home: NextPage = () => {
 
   const handleScan = async (decodedText: string) => {
     try {
-      await userRegistration(decodedText);
-      toast.success('Registration successful!');
+      const response = await userRegistration(decodedText);
+      const approvedMessage = response?.message || 'Registration successful!';
+      toast.success(approvedMessage);
       setScanStatus('approved');
-      setErrorMessage(null);
+      setErrorMessage(approvedMessage); // shows as success message too
     } catch (err: any) {
       const message =
         typeof err === 'object' && err?.message
@@ -42,7 +43,7 @@ const Home: NextPage = () => {
       setErrorMessage(message);
     }
 
-    // Reset state after 3 seconds
+    // Reset display after 3 seconds
     setTimeout(() => {
       setScanStatus(null);
       setErrorMessage(null);
@@ -101,24 +102,19 @@ const Home: NextPage = () => {
                 />
               </Box>
 
-              {scanStatus && (
-                <Text
-                  mt={4}
-                  fontSize="lg"
-                  fontWeight="bold"
-                  color={scanStatus === 'approved' ? 'green.400' : 'red.400'}
-                >
-                  {scanStatus === 'approved'
-                    ? '✅ Registration Approved'
-                    : '❌ Registration Failed'}
-                </Text>
-              )}
-
-              {errorMessage && scanStatus === 'failed' && (
-                <Text mt={2} fontSize="sm" color="red.500">
-                  {errorMessage}
-                </Text>
-              )}
+                        {scanStatus && (
+              <Text
+              mt={4}
+              fontSize="lg"
+              fontWeight="bold"
+              color={scanStatus === 'approved' ? 'green.400' : 'red.400'}
+              textAlign="center"
+            >
+              {scanStatus === 'approved'
+                ? `✅ ${errorMessage || 'Registration Approved'}`
+                : `❌ ${errorMessage || 'Registration Failed'}`}
+            </Text>
+          )}  
             </Center>
           </ModalBody>
           <ModalFooter>
