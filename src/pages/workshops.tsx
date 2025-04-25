@@ -53,13 +53,19 @@ const Workshops: React.FC = () => {
   const handleScan = async (decodedText: string) => {
     if (!selectedWorkshop) return;
     try {
-      await workshopCheckIn(selectedWorkshop.workshop_id, decodedText);
-      toast.success('Check‑in successful!');
-      router.push('/success'); // redirect on success
+      const result = await workshopCheckIn(selectedWorkshop.workshop_id, decodedText);
+      toast.success(result.message);
+      router.push({
+        pathname: '/success',
+        query: { message: result.message }
+      }); // redirect on success with query parameter
     } catch (err) {
-      console.error(err);
-      toast.error('Check‑in failed.');
-      router.push('/failure'); // redirect on failure
+      console.error('Check‑in failed', err);
+      toast.error('Check‑in failed');
+      router.push({
+        pathname: '/failure',
+        query: { message: (err as Error).message || 'An unknown error occurred' }
+      });
     } finally {
       setScannerOpen(false);
       setSelectedWorkshop(null);

@@ -1,7 +1,11 @@
 import React from "react";
+import { useRouter } from "next/router";
 import { Meteors } from "../components/meteorAnimation";
 
 const SuccessPage = () => {
+  const router = useRouter();
+  const { message } = router.query as { message?: string };
+
   return (
     <div className="relative w-full h-screen bg-black flex flex-col justify-center items-center">
       {/* Meteor animation */}
@@ -11,14 +15,19 @@ const SuccessPage = () => {
 
       {/* Main content */}
       <div className="relative z-10 flex flex-col items-center justify-center text-center">
-        {/* Success Large Text */}
-        <h1 className="text-white text-9xl font-extrabold mb-8">Success!</h1>
+        <h1 className="text-white text-9xl font-extrabold mb-8">
+          {message || "Success!"}
+        </h1>
 
-        {/* Success message */}
-        <p className="text-gray-400 text-xl mb-8">
-          Entry found
-        </p>
-
+        { !message && (
+          <p className="text-gray-400 text-xl mb-8">
+            Entry found
+          </p>
+        ) }
+        
+        {/* Spacer between message and gif */}
+        <div className="mb-8"></div>
+        
         {/* Success GIF */}
         <div className="w-full flex justify-center">
           <img

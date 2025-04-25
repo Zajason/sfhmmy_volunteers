@@ -168,26 +168,16 @@ export const loginUser = async (loginData) => {
   }
 
   export const workshopCheckIn = async (workshop_id, user_id) => {
-    try {
-      const response = await api.post('/volunteer/checkin', { workshop_id, user_id });
-      console.log('Check-in successful:', response.data);
-      return response.data;
-    } catch (error) {
-      console.error('Error during check-in:', error.response ? error.response.data : error.message);
-      throw error;
-    }
+  try {
+    const response = await api.post('/volunteer/checkin', { workshop_id, user_id });
+    console.log('Check-in successful:', response.data);
+    // Return the success message instead of throwing it
+    return { message: response.data.message || 'Check-in succeeded', data: response.data };
+  } catch (error) {
+    console.error('Error during check-in:', error.response ? error.response.data : error.message);
+    throw {message: error.response ? error.response.data.message : 'Check-in failed'};
   }
-
-  export const workshopWaitingListCheckIn = async (workshop_id, user_id) => {
-    try {
-      const response = await api.post('/volunteer/waitinglistcheckin', { workshop_id, user_id });
-      console.log('Waiting list check-in successful:', response.data);
-      return response.data;
-    } catch (error) {
-      console.error('Error during waiting list check-in:', error.response ? error.response.data : error.message);
-      throw error;
-    }
-  }
+};
 
   export const userRegistration = async (user_id) => {
     try {
